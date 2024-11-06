@@ -1,0 +1,97 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct { int codigo, quantidade; char nome[50]; float preco; } Fruta;
+
+Fruta** frutas = NULL; int total_frutas = 0;
+
+void cadastrar_fruta() {
+    int codigo; printf("Código da fruta: "); scanf("%d", &codigo);
+    for (int i = 0; i < total_frutas; i++) if (frutas[i]->codigo == codigo) { printf("Código já cadastrado!\n"); return; }
+
+    Fruta* nova = malloc(sizeof(Fruta)); if (!nova) { printf("Erro de memória!\n"); return; }
+    nova->codigo = codigo; printf("Nome da fruta: "); scanf("%s", nova->nome);
+    printf("Quantidade: "); scanf("%d", &nova->quantidade);
+    printf("Preço: "); scanf("%f", &nova->preco);
+
+    frutas = realloc(frutas, sizeof(Fruta*) * (++total_frutas));
+    if (!frutas) { printf("Erro de memória!\n"); free(nova); return; }
+
+    frutas[total_frutas - 1] = nova; printf("Fruta cadastrada!\n");
+}
+
+void listar_frutas() {
+    if (total_frutas == 0) { printf("Nenhuma fruta cadastrada.\n"); return; }
+    for (int i = 0; i < total_frutas; i++)
+        printf("Código: %d, Nome: %s, Quantidade: %d, Preço: %.2f\n", frutas[i]->codigo, frutas[i]->nome, frutas[i]->quantidade, frutas[i]->preco);
+}
+
+void buscar_fruta() {
+    int codigo; printf("Código da fruta: "); scanf("%d", &codigo);
+    for (int i = 0; i < total_frutas; i++)
+        if (frutas[i]->codigo == codigo) {
+            printf("Código: %d, Nome: %s, Quantidade: %d, Preço: %.2f\n", frutas[i]->codigo, frutas[i]->nome, frutas[i]->quantidade, frutas[i]->preco);
+            return;
+        }
+    printf("Fruta não encontrada.\n");
+}
+
+void alterar_fruta() {
+    int codigo; printf("Código da fruta a ser alterada: "); scanf("%d", &codigo);
+    for (int i = 0; i < total_frutas; i++)
+        if (frutas[i]->codigo == codigo) {
+            printf("Novo nome: "); scanf("%s", frutas[i]->nome);
+            printf("Nova quantidade: "); scanf("%d", &frutas[i]->quantidade);
+            printf("Novo preço: "); scanf("%f", &frutas[i]->preco);
+            printf("Fruta alterada!\n"); return;
+        }
+    printf("Fruta não encontrada.\n");
+}
+
+void excluir_fruta() {
+    int codigo; printf("Código da fruta a ser excluída: "); scanf("%d", &codigo);
+    for (int i = 0; i < total_frutas; i++) {
+        if (frutas[i]->codigo == codigo) {
+            if (frutas[i]->quantidade > 0) { printf("Estoque maior que zero.\n"); return; }
+            free(frutas[i]);
+            for (int j = i; j < total_frutas - 1; j++) frutas[j] = frutas[j + 1];
+            frutas = realloc(frutas, sizeof(Fruta*) * --total_frutas);
+            printf("Fruta excluída!\n"); return;
+        }
+    }
+    printf("Fruta não encontrada.\n");
+}
+
+void vender_fruta() {
+    int codigo, quantidade; printf("Código e quantidade: "); scanf("%d %d", &codigo, &quantidade);
+    for (int i = 0; i < total_frutas; i++) {
+        if (frutas[i]->codigo == codigo) {
+            if (frutas[i]->quantidade < quantidade) { printf("Estoque insuficiente.\n"); return; }
+            frutas[i]->quantidade -= quantidade;
+            FILE* f = fopen("vendas.txt", "a");
+            if (!f) { printf("Erro ao abrir arquivo.\n"); return; }
+            fprintf(f, "Código: %d, Quantidade: %d\n", codigo, quantidade); fclose(f);
+            printf("Venda registrada!\n"); return;
+        }
+    }
+    printf("Fruta não encontrada.\n");
+}
+
+void liberar_memoria() { for (int i = 0; i < total_frutas; i++) free(frutas[i]); free(frutas); }
+
+int main() {
+    int opcao;
+    do {
+        printf("\n1. Cadastrar 2. Listar 3. Buscar 4. Alterar 5. Excluir 6. Vender 7. Sair\nEscolha: ");
+        scanf("%d", &opcao);
+        switch(opcao) {
+            case 1: cadastrar_fruta(); break; case 2: listar_frutas(); break;
+            case 3: buscar_fruta(); break; case 4: alterar_fruta(); break;
+            case 5: excluir_fruta(); break; case 6: vender_fruta(); break;
+            case 7: liberar_memoria(); printf("Saindo...\n"); break;
+            default: printf("Opção inválida!\n");
+        }
+    } while(opcao != 7);
+    return 0;
+}
